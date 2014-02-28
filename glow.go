@@ -65,7 +65,7 @@ func (node *Node) DotString() string {
 	for _, name := range node.argNames[1:] {
 		s += "|<" + name + ">" + name
 	}
-	s += "\n"
+	s += "\"\n"
 	s += "shape = record\n]"
 	return s
 }
