@@ -26,7 +26,7 @@ A graph consists of a series of nodes that are connected by channels.
 
 ```go
 
-g := glow.NewGraph()
+g := glow.NewGraph(&globals)
 
 // Add nodes.
 g.AddNode(ExampleNode, "Node1", "StrIn", "StrOut")
