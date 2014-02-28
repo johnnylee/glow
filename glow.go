@@ -79,6 +79,8 @@ type Graph struct {
 	fgName   string           // Name of node to run in the foreground.
 }
 
+// NewGraph: Construct a new empty graph object. The value of globals
+// will be passed as the first argument to each node function.
 func NewGraph(globals interface{}) *Graph {
 	graph := new(Graph)
 	graph.globals = reflect.ValueOf(globals)
@@ -86,6 +88,10 @@ func NewGraph(globals interface{}) *Graph {
 	return graph
 }
 
+// AddNode: Add a new node to the graph. A node is implemented by a function,
+// fn, and has a unique identifying name. Names of function arguments after
+// the first must be given. The first argument will be the value of
+// globals given when creating the graph.
 func (g *Graph) AddNode(fn interface{}, name string, argNames ...string) {
 	// If the node name is already in use, this is a programming error.
 	_, ok := g.nodes[name]
@@ -97,6 +103,12 @@ func (g *Graph) AddNode(fn interface{}, name string, argNames ...string) {
 	g.nodes[name] = node
 }
 
+// Connect: Create a channel of the appropriate type to be passed to the
+// given node's implementing function when the graph is run. The size of
+// the channel buffer is the first argument. Additional arguments list the
+// nodes that will be using the channel. The format for these arguments is
+// "NodeName:ChannelName".
+// Returns the new channel as a reflect.Value.
 func (g *Graph) Connect(size int, nodeChans ...string) reflect.Value {
 	name, port := splitNamePort(nodeChans[0])
 	ch := g.nodes[name].MakeChan(port, size)
@@ -119,10 +131,14 @@ func (g *Graph) Connect(size int, nodeChans ...string) reflect.Value {
 	return ch
 }
 
+// SetForeground: Specify a node to run in the foreground when Run is called
+// on the graph.
 func (g *Graph) SetForeground(name string) {
 	g.fgName = name
 }
 
+// DotString: Return a string containing a dot file suitable for processing
+// by graphviz. On Linux, xdot can be used to view a dot file directly.
 func (g *Graph) DotString() string {
 	s := "digraph {"
 	s += "\ngraph [ rankdir=\"LR\" ];"
@@ -136,6 +152,8 @@ func (g *Graph) DotString() string {
 	return s
 }
 
+// Run: Run each of the graph's nodes in a goroutine, with the exception of an
+// optionally defined foreground node, which will run in the foreground.
 func (g *Graph) Run() {
 	var fgNode *Node
 
