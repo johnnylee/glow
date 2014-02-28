@@ -8,9 +8,9 @@ by channels.
 Nodes
 -----
 
-Nodes are implemented as by functions. The first argument to all nodes in a 
-graph is the graph's globals. Additional arguments must be channels for input 
-and output. By convention these channels have either "In" or "Out" as a suffix.
+Nodes are implemented by functions. The first argument to all nodes in a graph
+is the graph's globals. Additional arguments must be channels for input and 
+output. By convention these channels have either "In" or "Out" as a suffix.
 
 ```go
 
