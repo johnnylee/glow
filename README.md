@@ -44,3 +44,8 @@ g.SetForeground("Node2")
 // Run. 
 g.Run()
 ```
+
+Example
+-------
+
+See http://github.com/johnnylee/glowexample.
