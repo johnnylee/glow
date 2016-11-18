@@ -6,53 +6,62 @@ import (
 	"strings"
 )
 
+type Argument struct {
+	name string
+	val  reflect.Value
+	Type reflect.Type
+}
+
 // ----------------------------------------------------------------------------
 type Node struct {
-	name     string          // The node's name.
-	fi       interface{}     // The node's run function.
-	ft       reflect.Type    // The function's type.
-	fv       reflect.Value   // The function's value.
-	argNames []string        // Names of arguments for the function.
-	argVals  []reflect.Value // Argument values.
-	argTypes []reflect.Type  // Argument types.
+	name string        // The node's name.
+	fi   interface{}   // The node's run function.
+	ft   reflect.Type  // The function's type.
+	fv   reflect.Value // The function's value.
+	args []Argument
 }
 
 func NewNode(fn interface{}, name string, argNames ...string) *Node {
-	node := new(Node)
-	node.name = name
-	node.fi = fn
-	node.ft = reflect.TypeOf(fn)
-	node.fv = reflect.ValueOf(fn)
-	node.argNames = append([]string{"globals"}, argNames...)
-	node.argVals = make([]reflect.Value, len(argNames)+1)
-	node.argTypes = make([]reflect.Type, len(argNames)+1)
-	for i := 0; i < node.ft.NumIn(); i++ {
-		node.argTypes[i] = node.ft.In(i)
+	node := &Node{
+		name: name,
+		fi:   fn,
+		ft:   reflect.TypeOf(fn),
+		fv:   reflect.ValueOf(fn),
+	}
+
+	argNames = append([]string{"globals"}, argNames...)
+
+	for i, argName := range argNames {
+		node.args = append(node.args,
+			Argument{name: argName, Type: node.ft.In(i)})
 	}
 	return node
 }
 
 func (node *Node) Run() {
-	node.fv.Call(node.argVals)
+	values := make([]reflect.Value, len(node.args))
+	for i, arg := range node.args {
+		values[i] = arg.val
+	}
+	node.fv.Call(values)
 }
 
 func (node *Node) MakeChan(name string, size int) reflect.Value {
-	for i, argName := range node.argNames {
-		if argName == name {
-			argType := node.argTypes[i]
-			return reflect.MakeChan(argType, size)
+	for _, arg := range node.args {
+		if arg.name == name {
+			return reflect.MakeChan(arg.Type, size)
 		}
 	}
 	panic("Argument not found.")
 }
 
 func (node *Node) SetArg(name string, val reflect.Value) {
-	for i, argName := range node.argNames {
-		if argName == name {
-			if node.argVals[i].IsValid() {
+	for i, arg := range node.args {
+		if arg.name == name {
+			if arg.val.IsValid() {
 				panic("Argument alread set: " + name)
 			}
-			node.argVals[i] = val
+			node.args[i].val = val
 			return
 		}
 	}
@@ -62,8 +71,8 @@ func (node *Node) SetArg(name string, val reflect.Value) {
 func (node *Node) DotString() string {
 	s := node.name + " [\n"
 	s += "label = \"" + node.name
-	for _, name := range node.argNames[1:] {
-		s += "|<" + name + ">" + name
+	for _, arg := range node.args[1:] {
+		s += "|<" + arg.name + ">" + arg.name
 	}
 	s += "\"\n"
 	s += "shape = record\n]"
