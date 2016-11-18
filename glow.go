@@ -32,8 +32,14 @@ func NewNode(fn interface{}, name string, argNames ...string) *Node {
 	argNames = append([]string{"globals"}, argNames...)
 
 	for i, argName := range argNames {
-		node.args = append(node.args,
-			Argument{name: argName, Type: node.ft.In(i)})
+		var arg Argument
+		if node.ft.IsVariadic() && i >= node.ft.NumIn()-1 {
+			lastArg := node.ft.In(node.ft.NumIn() - 1)
+			arg = Argument{name: argName, Type: lastArg.Elem()}
+		} else {
+			arg = Argument{name: argName, Type: node.ft.In(i)}
+		}
+		node.args = append(node.args, arg)
 	}
 	return node
 }
